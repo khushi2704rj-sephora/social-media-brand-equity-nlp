@@ -1,0 +1,352 @@
+{
+  "name": "YouTube Brand Equity Comment Collector",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "76346219-7781-43dd-9896-bd5121071658",
+      "name": "Manual Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2000,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// YouTube Collection Configuration\nreturn [\n  {\n    json: {\n      youtubeApiKey: 'YOUR_YOUTUBE_API_KEYU',\n      searchQueries: [\n        'social media brand equity consumer behavior',\n        'Instagram marketing case study',\n        'TikTok influencer brand loyalty',\n        'consumer behavior digital marketing',\n        'brand perception social media'\n      ],\n      maxVideosPerQuery: 5,\n      maxCommentsPerVideo: 100,\n      targetComments: 150,\n      minLength: 20,\n      publishedAfter: '2024-01-01T00:00:00Z',\n      relevanceKeywords: ['brand', 'consumer', 'purchase', 'buy', 'bought', 'social media', 'Instagram', 'TikTok', 'Facebook', 'Twitter', 'YouTube', 'influencer', 'loyalty', 'recommend', 'marketing', 'advertising']\n    }\n  }\n];"
+      },
+      "id": "ad7a54be-376c-4c00-9519-ae55d64fe2fa",
+      "name": "YouTube Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        112
+      ],
+      "notes": "REPLACE 'YOUR_YOUTUBE_API_KEY_HERE' with your actual API key - Get it from: https://console.cloud.google.com"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create search iterations\nconst config = $input.first().json;\nconst searches = [];\n\nfor (const query of config.searchQueries) {\n  searches.push({\n    query: query,\n    apiKey: config.youtubeApiKey,\n    maxResults: config.maxVideosPerQuery,\n    publishedAfter: config.publishedAfter,\n    config: config\n  });\n}\n\nreturn searches.map(s => ({json: s}));"
+      },
+      "id": "6a52394d-67f1-42a9-8640-c23923be1efa",
+      "name": "Prepare Searches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1600,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "maxResults",
+              "value": "={{ $json.maxResults }}"
+            },
+            {
+              "name": "publishedAfter",
+              "value": "={{ $json.publishedAfter }}"
+            },
+            {
+              "name": "relevanceLanguage",
+              "value": "en"
+            },
+            {
+              "name": "order",
+              "value": "relevance"
+            },
+            {
+              "name": "key",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3000
+            }
+          },
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "844fbbc3-2e8e-4544-b4ba-3e6640155d74",
+      "name": "Search YouTube Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1408,
+        112
+      ],
+      "notes": "Searches YouTube with 3-second delay (API quota: 100 units per call)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract video IDs and metadata\nconst items = $input.all();\nconst videos = [];\n\nfor (const item of items) {\n  if (item.json.items && Array.isArray(item.json.items)) {\n    for (const video of item.json.items) {\n      if (video.id && video.id.videoId) {\n        videos.push({\n          video_id: video.id.videoId,\n          video_title: video.snippet.title,\n          video_url: `https://www.youtube.com/watch?v=${video.id.videoId}`,\n          channel_name: video.snippet.channelTitle,\n          channel_id: video.snippet.channelId,\n          published_at: video.snippet.publishedAt,\n          apiKey: $('YouTube Config').first().json.youtubeApiKey,\n          maxComments: $('YouTube Config').first().json.maxCommentsPerVideo\n        });\n      }\n    }\n  }\n}\n\nreturn videos.map(v => ({json: v}));"
+      },
+      "id": "d52a6606-0420-4b49-bb8a-86659f12f251",
+      "name": "Extract Video IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/commentThreads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet,replies"
+            },
+            {
+              "name": "videoId",
+              "value": "={{ $json.video_id }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "={{ $json.maxComments }}"
+            },
+            {
+              "name": "order",
+              "value": "relevance"
+            },
+            {
+              "name": "textFormat",
+              "value": "plainText"
+            },
+            {
+              "name": "key",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "29eb2831-4f1c-4fdd-bfa6-0815188f1e99",
+      "name": "Fetch Comment Threads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1008,
+        112
+      ],
+      "notes": "Fetches comments with 2-second delay (API quota: ~1 unit per comment)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse comment threads including replies\nconst items = $input.all();\nconst allComments = [];\n\nfor (const item of items) {\n  // Skip if comments are disabled or error occurred\n  if (!item.json.items || !Array.isArray(item.json.items)) continue;\n  \n  const videoInfo = {\n    video_id: item.json.video_id || 'N/A',\n    video_title: item.json.video_title || 'N/A',\n    video_url: item.json.video_url || 'N/A',\n    channel_name: item.json.channel_name || 'N/A'\n  };\n  \n  for (const thread of item.json.items) {\n    const topComment = thread.snippet.topLevelComment.snippet;\n    \n    // Add top-level comment\n    allComments.push({\n      platform: 'YouTube',\n      video_url: videoInfo.video_url,\n      comment_id: thread.snippet.topLevelComment.id,\n      comment_text: topComment.textDisplay,\n      author_username: topComment.authorDisplayName,\n      timestamp: topComment.publishedAt,\n      likes: topComment.likeCount,\n      reply_count: thread.snippet.totalReplyCount,\n      video_title: videoInfo.video_title,\n      channel_name: videoInfo.channel_name,\n      is_reply: false\n    });\n    \n    // Add replies if they exist\n    if (thread.replies && thread.replies.comments) {\n      for (const reply of thread.replies.comments) {\n        const replySnippet = reply.snippet;\n        allComments.push({\n          platform: 'YouTube',\n          video_url: videoInfo.video_url,\n          comment_id: reply.id,\n          comment_text: replySnippet.textDisplay,\n          author_username: replySnippet.authorDisplayName,\n          timestamp: replySnippet.publishedAt,\n          likes: replySnippet.likeCount,\n          reply_count: 0,\n          video_title: videoInfo.video_title,\n          channel_name: videoInfo.channel_name,\n          is_reply: true,\n          parent_comment_id: thread.snippet.topLevelComment.id\n        });\n      }\n    }\n  }\n}\n\nreturn allComments.map(c => ({json: c}));"
+      },
+      "id": "b60d45d5-3f0d-43f8-9acc-fb1f6da05c6e",
+      "name": "Parse Comments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        112
+      ],
+      "notes": "Extracts all comments and replies with metadata"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Filter and score comments - FOR \"RUN ONCE FOR EACH ITEM\" MODE\nconst config = $('YouTube Config').first().json;\nconst minLength = config.minLength || 10;\nconst keywords = Array.isArray(config.relevanceKeywords) ? config.relevanceKeywords : [];\n\nconst comment = $input.item.json;\nconst text = comment.comment_text ? String(comment.comment_text).toLowerCase() : '';\n\n// Check minimum length\nif (!text || text.length < minLength) return null;\n\n// Calculate keyword matches\nlet keywordScore = 0;\nlet matchedKeywords = [];\n\nif (keywords.length > 0) {\n  for (const keyword of keywords) {\n    if (keyword && text.includes(String(keyword).toLowerCase())) {\n      keywordScore++;\n      matchedKeywords.push(keyword);\n    }\n  }\n}\n\n// Calculate engagement signals\nconst hasQuestion = text.includes('?');\nconst hasBuyIntent = /buy|purchase|price|cost|worth|sell/i.test(text);\nconst hasOpinion = /think|feel|love|hate|best|worst|better|good|bad/i.test(text);\nconst hasEngagement = /help|recommend|suggest|advice|thank/i.test(text);\n\nlet engagementCount = 0;\nif (hasQuestion) engagementCount++;\nif (hasBuyIntent) engagementCount++;\nif (hasOpinion) engagementCount++;\nif (hasEngagement) engagementCount++;\n\n// Skip if no engagement\nif (engagementCount < 1) return null;\n\n// Calculate relevance score\nconst relevanceScore = \n  (hasQuestion ? 25 : 0) +\n  (hasBuyIntent ? 20 : 0) +\n  (hasOpinion ? 20 : 0) +\n  (hasEngagement ? 20 : 0) +\n  (keywordScore * 5);\n\nreturn {\n  json: {\n    ...comment,\n    relevance_score: Math.min(relevanceScore, 100),\n    engagement_signals: engagementCount,\n    keyword_matches: keywordScore,\n    matched_keywords: matchedKeywords\n  }\n};\n\n"
+      },
+      "id": "b5b8626c-17f5-4175-aaa0-197c2763ae9e",
+      "name": "Filter & Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        112
+      ],
+      "notes": "Filters by relevance and calculates quality score"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "comment_id",
+        "options": {}
+      },
+      "id": "53eaa2f8-4315-4f8a-982b-70f19a5ccb8e",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "YouTube Brand Equity Comments. ​",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -192,
+        112
+      ],
+      "id": "303fd1cb-c45b-45d9-a20d-3eeb11fa96b8",
+      "name": "Create spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Start": {
+      "main": [
+        [
+          {
+            "node": "YouTube Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Config": {
+      "main": [
+        [
+          {
+            "node": "Prepare Searches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Searches": {
+      "main": [
+        [
+          {
+            "node": "Search YouTube Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search YouTube Videos": {
+      "main": [
+        [
+          {
+            "node": "Extract Video IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video IDs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Comment Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Comment Threads": {
+      "main": [
+        [
+          {
+            "node": "Parse Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Comments": {
+      "main": [
+        [
+          {
+            "node": "Filter & Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Score": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "3709241d-f178-4abb-a783-47414039c784",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "id": "zad3fKVWH7h4fmEvNbhoI",
+  "tags": []
+}

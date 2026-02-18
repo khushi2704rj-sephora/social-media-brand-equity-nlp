@@ -1,0 +1,69 @@
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.*
+config/*.env
+!config/env.example
+
+# ===========================
+# Data Files (too large for git)
+# ===========================
+*.xlsx
+*.csv
+*.xls
+data/raw/
+data/processed/
+data/exports/
+
+# ===========================
+# n8n Runtime
+# ===========================
+.n8n/
+n8n-data/
+
+# ===========================
+# Python
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+env/
+
+# ===========================
+# Node.js
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================
+# IDE & OS
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# ===========================
+# Jupyter Notebooks (checkpoints)
+# ===========================
+.ipynb_checkpoints/
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log

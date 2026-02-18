@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+title: >-
+  Assessing Brand Equity and Consumer Behaviour through
+  Social Media Analytics
+message: >-
+  If you use this research or automation pipeline, please cite
+  it using the metadata from this file.
+type: software
+authors:
+  - given-names: Khushi
+    # family-names: [YOUR_LAST_NAME]
+    # orcid: https://orcid.org/0000-0000-0000-0000
+repository-code: >-
+  https://github.com/YOUR_USERNAME/social-media-sentiment-brand-equity
+abstract: >-
+  This repository contains the complete automation pipeline for
+  assessing brand equity and consumer behaviour through social
+  media sentiment analysis. Multi-platform data is collected from
+  Reddit, YouTube, and Instagram using n8n workflow automation and
+  Apify web scraping, then analyzed using HuggingFace's
+  CardiffNLP Twitter-RoBERTa sentiment model. The research
+  establishes a quantitative framework for understanding how
+  social media sentiment correlates with brand equity dimensions
+  and consumer purchase behaviour.
+keywords:
+  - brand equity
+  - consumer behaviour
+  - social media analytics
+  - sentiment analysis
+  - NLP
+  - n8n automation
+  - HuggingFace
+  - RoBERTa
+  - digital marketing
+  - research methodology
+license: MIT
+date-released: "2026-02-18"
+references:
+  - type: conference-paper
+    title: >-
+      Assessing Brand Equity and Consumer Behaviour through
+      Social Media Analytics
+    authors:
+      - given-names: Khushi
+    conference:
+      name: IGI Global
+    # doi: [TO_BE_ADDED_AFTER_PUBLICATION]
+    year: 2026

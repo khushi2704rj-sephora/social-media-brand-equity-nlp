@@ -1,0 +1,762 @@
+{
+  "name": "Social Media Sentiment Analysis - Brand Equity & Consumer Behavior",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "35b112a4-9a73-4e76-ab44-75ad08085f36",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -256,
+        112
+      ],
+      "notes": "Runs every 6 hours to collect fresh data"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/r/marketing+socialmedia+Entrepreneur+analytics/search.json?q=brand+equity+OR+consumer+behavior+OR+social+media+analytics&sort=new&limit=50&t=month",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "cf4e5efd-2c52-49f9-8ae2-821a16dafb33",
+      "name": "Get Reddit Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        32
+      ],
+      "retryOnFail": true,
+      "notes": "Scrapes Reddit without API key - works immediately"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst posts = response.data.children;\n\nconst relevantPosts = posts\n  .filter(post => {\n    const title = post.data.title.toLowerCase();\n    const selftext = post.data.selftext.toLowerCase();\n    const text = title + ' ' + selftext;\n    \n    // Filter for highly relevant keywords\n    const keywords = [\n      'social media analytics',\n      'brand equity',\n      'consumer behavior',\n      'brand perception',\n      'brand sentiment',\n      'social listening',\n      'brand reputation'\n    ];\n    \n    return keywords.some(keyword => text.includes(keyword));\n  })\n  .map(post => ({\n    json: {\n      id: post.data.id,\n      title: post.data.title,\n    text: post.data.body || post.data.selftext || post.data.title || '',      author: post.data.author,\n      subreddit: post.data.subreddit,\n      url: `https://reddit.com${post.data.permalink}`,\n      score: post.data.score,\n      num_comments: post.data.num_comments,\n      created_utc: new Date(post.data.created_utc * 1000).toISOString(),\n      platform: 'reddit'\n    }\n  }));\n\nreturn relevantPosts;"
+      },
+      "id": "1d44e39a-c307-45a4-afaf-0abee3703dc8",
+      "name": "Parse Reddit Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        16
+      ],
+      "notes": "Extracts post data from Reddit JSON response"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/youtube/v3/search?part=snippet&q=brand+equity+consumer+behavior+social+media+marketing&type=video&maxResults=10&order=date&key=YOUR_YOUTUBE_API_KEY",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "da34ef8e-8efd-4c1e-b663-19b82c41d906",
+      "name": "Search YouTube Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        208
+      ],
+      "notes": "Replace YOUR_YOUTUBE_API_KEY with actual key"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = [];\nconst response = $input.first().json;\n\nif (response && response.items) {\n  for (const video of response.items) {\n    items.push({\n      json: {\n        videoId: video.id.videoId,\n        title: video.snippet.title,\n        channelTitle: video.snippet.channelTitle,\n        publishedAt: video.snippet.publishedAt\n      }\n    });\n  }\n}\n\nreturn items;"
+      },
+      "id": "ce56f5d5-8aae-4a51-880d-0da56b710f89",
+      "name": "Extract Video IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        208
+      ],
+      "notes": "Extracts video IDs for comment retrieval"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId={{$json.videoId}}&maxResults=30&order=relevance&key=YOUR_YOUTUBE_API_KEY",
+        "options": {}
+      },
+      "id": "ca208514-cba7-4b6b-8efe-38daa2b964f9",
+      "name": "Get YouTube Comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        208
+      ],
+      "notes": "Fetches comments for each video"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = [];\nconst response = $input.first().json;\n\nif (response && response.items) {\n  for (const video of response.items) {\n    const snippet = video.snippet;\n    \n    // Combine title and description for analysis\n    const text = (snippet.title + ' ' + snippet.description).trim();\n    \n    // Only include if meaningful text exists\n    if (text.length >= 20) {\n      items.push({\n        json: {\n          id: video.id.videoId,\n          text: text.substring(0, 500), // Limit to 500 chars\n          author: snippet.channelTitle,\n          created_at: snippet.publishedAt || snippet.publishTime,\n          likes: 0, // Videos don't have likes in search results\n          videoId: video.id.videoId,\n          platform: 'youtube',\n          type: 'video',\n          url: `https://youtube.com/watch?v=${video.id.videoId}`\n        }\n      });\n    }\n  }\n}\n\nreturn items;\n"
+      },
+      "id": "c19da9c6-a1f4-4ee2-999c-ed5a6779a8d7",
+      "name": "Parse YouTube Comments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        208
+      ],
+      "notes": "Cleans and structures YouTube comment data"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "afc66f9d-f579-4888-9065-f93bb57a9a69",
+      "name": "Merge Reddit and YouTube",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        64
+      ],
+      "notes": "Combines data from both platforms"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst normalized = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  let cleanText = (data.text || '').toString();\n  cleanText = cleanText\n    .replace(/https?:\\/\\/[^\\s]+/g, '')\n    .replace(/#\\w+/g, '')\n    .replace(/@\\w+/g, '')\n    .replace(/[\\r\\n]+/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n  \n  if (cleanText.length >= 20 && cleanText.length <= 500) {\n    normalized.push({\n      json: {\n        id: data.id || Math.random().toString(36).substring(7),\n        text: cleanText,\n        author: data.author || 'anonymous',\n        created_at: data.created_at || new Date().toISOString(),\n        platform: data.platform || 'unknown',\n        engagement: {\n          score: data.score || data.likes || 0,\n          comments: data.num_comments || 0\n        },\n        url: data.url || '',\n        subreddit: data.subreddit || null,\n        videoId: data.videoId || null,\n        researchTopic: 'Social Media Analytics in Brand Equity & Consumer Behavior',\n        collectedAt: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn normalized;"
+      },
+      "id": "21814ec3-435e-465b-9921-319ffdd18649",
+      "name": "Normalize Data Structure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        16
+      ],
+      "notes": "Standardizes data format across platforms"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "8e6af104-d447-4ceb-8f5e-f8fac65dcb89",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1504,
+        112
+      ],
+      "notes": "Processes 10 items at a time to avoid rate limits"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-roberta-base-sentiment\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"inputs\": \"{{$json.text}}\"}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "e3c73216-1ee7-4cb2-b259-d54b5b4ec9ae",
+      "name": "Hugging Face Sentiment Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1696,
+        144
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_HUGGINGFACE_CREDENTIAL_ID",
+          "name": "Header Auth account"
+        }
+      },
+      "notes": "Analyzes sentiment using AI model"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst originalItems = $('Normalize Data Structure').all();\n\n// Group every 3 sentiment results together (each post has 3 labels)\nconst results = [];\n\nfor (let i = 0; i < allItems.length; i += 3) {\n  const scores = [\n    allItems[i]?.json,\n    allItems[i + 1]?.json,\n    allItems[i + 2]?.json\n  ].filter(Boolean);\n  \n  if (scores.length === 0) continue;\n  \n  const postIndex = Math.floor(i / 3);\n  const originalData = originalItems[postIndex]?.json || {};\n  \n  // Find highest score\n  let maxScore = -1;\n  let maxLabel = 'NEUTRAL';\n  \n  scores.forEach(s => {\n    if (s && typeof s.score === 'number' && s.score > maxScore) {\n      maxScore = s.score;\n      maxLabel = s.label;\n    }\n  });\n  \n  // Map labels to readable names\n  const labelMap = {\n    'LABEL_0': 'NEGATIVE',\n    'LABEL_1': 'NEUTRAL',\n    'LABEL_2': 'POSITIVE'\n  };\n  \n  // Create detailed scores object\n  const detailedScores = {};\n  scores.forEach(s => {\n    if (s && s.label) {\n      const readableLabel = labelMap[s.label] || s.label;\n      detailedScores[readableLabel] = typeof s.score === 'number' ? \n        parseFloat(s.score.toFixed(4)) : 0;\n    }\n  });\n  \n  results.push({\n    json: {\n      ...originalData,\n      sentiment: labelMap[maxLabel] || maxLabel,\n      sentimentScore: maxScore > 0 ? parseFloat(maxScore.toFixed(4)) : 0,\n      positiveScore: detailedScores['POSITIVE'] || 0,\n      neutralScore: detailedScores['NEUTRAL'] || 0,\n      negativeScore: detailedScores['NEGATIVE'] || 0,\n      analyzedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "id": "04200b51-e262-4a91-b22f-35efa1c7a730",
+      "name": "Parse Sentiment Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        64
+      ],
+      "notes": "Extracts sentiment scores and labels"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "negative-check",
+              "leftValue": "={{$json.sentiment.label}}",
+              "rightValue": "negative",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "confidence-check",
+              "leftValue": "={{$json.sentiment.confidence}}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3b667137-b489-44e1-b59a-443226c05d4a",
+      "name": "Filter High-Confidence Negative",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        144
+      ],
+      "notes": "Filters negative sentiment with >70% confidence"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Sentiment Analysis Results",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{$json.id}}",
+            "timestamp": "={{$json.analyzedAt}}",
+            "platform": "={{$json.platform}}",
+            "author": "={{$json.author}}",
+            "text": "={{$json.text}}",
+            "sentiment_label": "={{$json.sentiment.label}}",
+            "sentiment_score": "={{$json.sentiment.score}}",
+            "positive_score": "={{$json.sentiment.positive}}",
+            "neutral_score": "={{$json.sentiment.neutral}}",
+            "negative_score": "={{$json.sentiment.negative}}",
+            "engagement_score": "={{$json.engagement.score}}",
+            "url": "={{$json.url}}",
+            "created_at": "={{$json.created_at}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "author",
+              "displayName": "author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment_label",
+              "displayName": "sentiment_label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment_score",
+              "displayName": "sentiment_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "positive_score",
+              "displayName": "positive_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "neutral_score",
+              "displayName": "neutral_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "negative_score",
+              "displayName": "negative_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "engagement_score",
+              "displayName": "engagement_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "28b1459c-2bfc-48be-b661-5a0dcdf469eb",
+      "name": "Store in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2720,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Saves all analyzed data to spreadsheet"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL ",
+        "subject": "=🚨 Negative Sentiment Alert - {{$json.platform}}",
+        "message": "=<h2>🚨 High-Confidence Negative Sentiment Alert</h2>  <p><strong>Platform:</strong> {{$json.platform}}</p> <p><strong>Author:</strong> {{$json.author}}</p> <p><strong>Created:</strong> {{$json.created_at}}</p>  <h3>Sentiment Analysis:</h3> <ul>   <li><strong>Label:</strong> {{$json.sentiment.label}}</li>   <li><strong>Confidence:</strong> {{$json.sentiment.score}}</li>   <li><strong>Negative Score:</strong> {{$json.sentiment.negative}}</li> </ul>  <h3>Content:</h3> <p>{{$json.text}}</p>  <p><a href=\"{{$json.url}}\">View Original Post</a></p>  <hr> <p><small>Analyzed: {{$json.analyzedAt}}</small></p> <p><small>Automated alert from n8n Sentiment Analysis</small></p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2800,
+        0
+      ],
+      "id": "fb4c10f0-0290-4102-a251-5e234f4bc5a2",
+      "name": "Send a message",
+      "webhookId": "REDACTED_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1936,
+        144
+      ],
+      "id": "5b6297b0-301a-4afa-906e-bf15fc075e27",
+      "name": "Wait",
+      "webhookId": "REDACTED_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "text, author",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        480,
+        16
+      ],
+      "id": "edf071e5-be8b-444d-bfd1-00d39dd6bd57",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "text, author, timestamp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        736,
+        240
+      ],
+      "id": "b529ac40-05f9-4026-b5e9-a63e30f6d914",
+      "name": "Remove Duplicates1"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "text, author, timestamp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        112
+      ],
+      "id": "e6b0e423-fec1-4c57-b445-3f5670859714",
+      "name": "Remove Duplicates2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search YouTube Videos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Reddit Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reddit Posts": {
+      "main": [
+        [
+          {
+            "node": "Parse Reddit Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reddit Data": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search YouTube Videos": {
+      "main": [
+        [
+          {
+            "node": "Extract Video IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video IDs": {
+      "main": [
+        [
+          {
+            "node": "Get YouTube Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get YouTube Comments": {
+      "main": [
+        [
+          {
+            "node": "Parse YouTube Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse YouTube Comments": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Reddit and YouTube": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data Structure": {
+      "main": [
+        [
+          {
+            "node": "Split Into Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Batches": {
+      "main": [
+        [
+          {
+            "node": "Parse Sentiment Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hugging Face Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hugging Face Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Sentiment Results": {
+      "main": [
+        [
+          {
+            "node": "Filter High-Confidence Negative",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter High-Confidence Negative": {
+      "main": [
+        [
+          {
+            "node": "Store in Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Split Into Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Merge Reddit and YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates1": {
+      "main": [
+        [
+          {
+            "node": "Merge Reddit and YouTube",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates2": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6e102748-b88a-4a70-bb0b-ff3df6004e30",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED_INSTANCE_ID"
+  },
+  "id": "_eLrTVDqgZBpi99e-UJ-_",
+  "tags": [
+    {
+      "updatedAt": "2026-01-29T14:23:38.131Z",
+      "createdAt": "2026-01-29T14:23:38.131Z",
+      "id": "7yMa2lNE787q6Mnd",
+      "name": "sentiment-analysis"
+    },
+    {
+      "updatedAt": "2026-01-31T17:59:55.199Z",
+      "createdAt": "2026-01-31T17:59:55.199Z",
+      "id": "iTNgWkUcEFGFEk8F",
+      "name": "research"
+    },
+    {
+      "updatedAt": "2026-01-29T14:23:38.126Z",
+      "createdAt": "2026-01-29T14:23:38.126Z",
+      "id": "xc7J6Clta468su0l",
+      "name": "social-media"
+    }
+  ]
+}
