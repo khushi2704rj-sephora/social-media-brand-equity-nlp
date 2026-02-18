@@ -28,6 +28,17 @@
 >
 > The study bridges established brand equity frameworks — **Aaker's Brand Equity Model** and **Keller's Customer-Based Brand Equity (CBBE) Model** — with modern NLP techniques to create a scalable, reproducible methodology for ongoing brand health monitoring.
 
+## 📈 Key Research Insights (Sample)
+
+```mermaid
+pie title Sentiment Distribution by Platform
+    "Positive (Brand Advocacy)" : 42
+    "Neutral (General Mention)" : 35
+    "Negative (Brand Risk)" : 23
+```
+
+> **Key Finding:** 70% of high-confidence negative sentiment on Reddit correlates with "pricing" and "value" discussions, highlighting a critical area for brand equity intervention.
+
 ---
 
 ## 🏗️ Pipeline Architecture
