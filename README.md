@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 📊 Assessing Brand Equity & Consumer Behaviour through Social Media Analytics
 
@@ -367,4 +367,3 @@ This project is licensed under the [MIT License](LICENSE).
 *If this project helps your research, please ⭐ star the repository*
 
 </div>
-]]>
