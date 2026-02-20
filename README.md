@@ -1,3 +1,5 @@
+[![Validate Project Config](https://github.com/khushi2704rj-sephora/social-media-brand-equity-nlp/actions/workflows/validate-config.yml/badge.svg)](https://github.com/khushi2704rj-sephora/social-media-brand-equity-nlp/actions/workflows/validate-config.yml)
+
 <div align="center">
 
 # 📊 Assessing Brand Equity & Consumer Behaviour through Social Media Analytics
