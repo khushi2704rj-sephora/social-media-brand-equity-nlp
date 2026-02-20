@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving<img src="assets/banner.svg" alt="Banner" width="100%">color=0:0d1117,50:1a4a3a,100:2d8a6e<img src="assets/banner.svg" alt="Banner" width="100%">height=220<img src="assets/banner.svg" alt="Banner" width="100%">section=header<img src="assets/banner.svg" alt="Banner" width="100%">text=Social%20Media%20Brand%20Equity<img src="assets/banner.svg" alt="Banner" width="100%">fontSize=42<img src="assets/banner.svg" alt="Banner" width="100%">fontColor=ffffff<img src="assets/banner.svg" alt="Banner" width="100%">animation=fadeIn<img src="assets/banner.svg" alt="Banner" width="100%">fontAlignY=35<img src="assets/banner.svg" alt="Banner" width="100%">desc=NLP%20%7C%20Sentiment%20Analysis%20%7C%20RoBERTa%20%7C%20n8n%20Automation<img src="assets/banner.svg" alt="Banner" width="100%">descSize=16<img src="assets/banner.svg" alt="Banner" width="100%">descAlignY=55<img src="assets/banner.svg" alt="Banner" width="100%">descColor=cccccc" alt="Banner" width="100%">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:1a4a3a,100:2d8a6e&height=220&section=header&text=Social%20Media%20Brand%20Equity&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=NLP%20%7C%20Sentiment%20Analysis%20%7C%20RoBERTa%20%7C%20n8n%20Automation&descSize=16&descAlignY=55&descColor=cccccc" alt="Banner" width="100%">
 
 </div>
 
