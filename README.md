@@ -287,6 +287,58 @@ Each analysed record contains **13 structured fields**:
 
 ---
 
+## 🔍 Sample Pipeline Output
+
+Below is a preview of what the pipeline produces — each record is enriched with multi-class sentiment scores:
+
+| Platform | Text (truncated) | Sentiment | Confidence | Engagement |
+|---|---|---|---|---|
+| 🔴 Reddit | *"…quality has really gone downhill. Not worth the price…"* | **NEGATIVE** | `94.2%` | 156 |
+| ▶️ YouTube | *"Does anyone know if they ship to Canada? I love their aesthetic!"* | **POSITIVE** | `88.8%` | 42 |
+| 📷 Instagram | *"Just bought this yesterday."* | **NEUTRAL** | `75.4%` | 12 |
+
+<details>
+<summary>📋 Full JSON output (click to expand)</summary>
+
+```json
+[
+    {
+        "platform": "reddit",
+        "text": "I've been using this brand for years and the quality has really gone downhill.",
+        "sentiment_label": "NEGATIVE",
+        "sentiment_score": 0.9421,
+        "positive_score": 0.0123,
+        "neutral_score": 0.0456,
+        "negative_score": 0.9421,
+        "engagement_score": 156
+    },
+    {
+        "platform": "youtube",
+        "text": "Does anyone know if they ship to Canada? I love their aesthetic!",
+        "sentiment_label": "POSITIVE",
+        "sentiment_score": 0.8876,
+        "positive_score": 0.8876,
+        "neutral_score": 0.1012,
+        "negative_score": 0.0112,
+        "engagement_score": 42
+    },
+    {
+        "platform": "instagram",
+        "text": "Just bought this yesterday.",
+        "sentiment_label": "NEUTRAL",
+        "sentiment_score": 0.7543,
+        "positive_score": 0.1234,
+        "neutral_score": 0.7543,
+        "negative_score": 0.1223,
+        "engagement_score": 12
+    }
+]
+```
+
+</details>
+
+---
+
 ## 🧠 Sentiment Model
 
 **[CardiffNLP Twitter-RoBERTa-base-sentiment](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment)**
@@ -373,10 +425,22 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
+---
+
 <div align="center">
 
-**Built with ❤️ for academic research**
+### 👩‍💻 Author
 
-*If this project helps your research, please ⭐ star the repository*
+**Khushi Kothari**
+
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/khushi2704rj-sephora)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/khushi-kothari--/)
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:khushi2704.ak@gmail.com)
+
+*MSc Business Analytics · Data & AI Enthusiast*
+
+---
+
+⭐ **If this project helps your research, please star the repository** ⭐
 
 </div>
