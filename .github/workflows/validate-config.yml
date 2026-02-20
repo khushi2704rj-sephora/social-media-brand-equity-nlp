@@ -1,0 +1,39 @@
+name: Validate Project Config
+
+on:
+  push:
+    branches: [main]
+    paths: ['config/**', 'workflows/**', '**/*.md']
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate YAML configs
+        run: |
+          pip install pyyaml
+          python -c "
+          import yaml, glob, sys
+          errors = []
+          for f in glob.glob('config/**/*.yml', recursive=True) + glob.glob('config/**/*.yaml', recursive=True) + glob.glob('workflows/**/*.yml', recursive=True):
+              try:
+                  with open(f) as fh:
+                      yaml.safe_load(fh)
+                  print(f'✓ {f}')
+              except Exception as e:
+                  errors.append(f'✗ {f}: {e}')
+                  print(f'✗ {f}: {e}')
+          if errors:
+              sys.exit(1)
+          print('All configs valid!')
+          "
+
+      - name: Check Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+        continue-on-error: true
