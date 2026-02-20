@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a4a3a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2d8a6e;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#1a4a3a;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  
+  <!-- Wave 1 -->
+  <path d="M0,180 C200,140 400,200 600,160 C800,120 1000,180 1200,150 L1200,300 L0,300 Z" fill="url(#wave)" opacity="0.4"/>
+  
+  <!-- Wave 2 -->
+  <path d="M0,220 C300,180 500,240 700,200 C900,160 1100,220 1200,190 L1200,300 L0,300 Z" fill="url(#wave)" opacity="0.6"/>
+  
+  <!-- Wave 3 -->
+  <path d="M0,250 C200,230 400,260 600,240 C800,220 1000,250 1200,235 L1200,300 L0,300 Z" fill="#2d8a6e" opacity="0.3"/>
+  
+  <!-- Title -->
+  <text x="600" y="110" font-family="Segoe UI, Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1">Social Media Brand Equity</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="155" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)" text-anchor="middle" letter-spacing="2">NLP | Sentiment Analysis | RoBERTa | n8n Automation</text>
+  
+  <!-- Tagline -->
+  <text x="600" y="260" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="white" text-anchor="middle" letter-spacing="0.5">From Multi-Platform Data Collection to AI-Powered Brand Health Monitoring</text>
+</svg>
