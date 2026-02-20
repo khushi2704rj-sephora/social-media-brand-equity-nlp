@@ -2,6 +2,13 @@
 
 <div align="center">
 
+<img src="assets/banner.svg" alt="Banner" width="100%">
+
+</div>
+
+
+<div align="center">
+
 # 📊 Assessing Brand Equity & Consumer Behaviour through Social Media Analytics
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
